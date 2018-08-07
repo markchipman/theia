@@ -18,6 +18,7 @@ import { injectable, inject } from 'inversify';
 import { QuickCommandService } from './quick-command-service';
 import { Command, CommandRegistry, CommandContribution } from '../../common';
 import { KeybindingRegistry, KeybindingContribution } from "../keybinding";
+import { QuickOpenService } from './quick-open-service';
 
 export const quickCommand: Command = {
     id: 'quickCommand',
@@ -30,9 +31,13 @@ export class QuickCommandFrontendContribution implements CommandContribution, Ke
     @inject(QuickCommandService)
     protected readonly quickCommandService: QuickCommandService;
 
+    @inject(QuickOpenService)
+    protected readonly quickOpenService: QuickOpenService;
+
     registerCommands(commands: CommandRegistry): void {
         commands.registerCommand(quickCommand, {
-            execute: () => this.quickCommandService.open()
+            // execute: () => this.quickCommandService.open()
+            execute: () => this.quickOpenService.show('>')
         });
     }
 

@@ -17,16 +17,25 @@
 import { injectable, inject } from 'inversify';
 import { QuickFileOpenService, quickFileOpen } from './quick-file-open';
 import { CommandRegistry, CommandContribution } from '@theia/core/lib/common';
-import { KeybindingRegistry, KeybindingContribution } from '@theia/core/lib/browser';
+import { KeybindingRegistry, KeybindingContribution, QuickOpenContribution, QuickOpenHandlerRegistry, QuickOpenService } from '@theia/core/lib/browser';
+import { FileQuickOpenHandler } from './file-quick-open-handler';
 
 @injectable()
-export class QuickFileOpenFrontendContribution implements CommandContribution, KeybindingContribution {
+export class QuickFileOpenFrontendContribution implements CommandContribution, KeybindingContribution, QuickOpenContribution {
 
-    constructor(@inject(QuickFileOpenService) protected readonly quickFileOpenService: QuickFileOpenService) { }
+    @inject(FileQuickOpenHandler)
+    protected readonly fileQuickOpenHandler: FileQuickOpenHandler;
+
+    @inject(QuickFileOpenService)
+    protected readonly quickFileOpenService: QuickFileOpenService;
+
+    @inject(QuickOpenService)
+    protected readonly quickOpenService: QuickOpenService;
 
     registerCommands(commands: CommandRegistry): void {
         commands.registerCommand(quickFileOpen, {
-            execute: () => this.quickFileOpenService.open(),
+            // execute: () => this.quickFileOpenService.open(),
+            execute: () => this.quickOpenService.show('...'),
             isEnabled: () => this.quickFileOpenService.isEnabled()
         });
     }
@@ -38,4 +47,8 @@ export class QuickFileOpenFrontendContribution implements CommandContribution, K
         });
     }
 
+    registerQuickOpenHandlers(handlers: QuickOpenHandlerRegistry): void {
+        handlers.registerHandler(this.fileQuickOpenHandler);
+        handlers.registerDefaultHandler(this.fileQuickOpenHandler);
+    }
 }

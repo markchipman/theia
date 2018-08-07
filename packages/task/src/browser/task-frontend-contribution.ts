@@ -18,9 +18,10 @@ import { inject, injectable, named } from 'inversify';
 import { ILogger, ContributionProvider } from '@theia/core/lib/common';
 import { QuickOpenTask } from './quick-open-task';
 import { MAIN_MENU_BAR, CommandContribution, Command, CommandRegistry, MenuContribution, MenuModelRegistry } from '@theia/core/lib/common';
-import { FrontendApplication, FrontendApplicationContribution } from '@theia/core/lib/browser';
+import { FrontendApplication, FrontendApplicationContribution, QuickOpenContribution, QuickOpenHandlerRegistry } from '@theia/core/lib/browser';
 import { WidgetManager } from '@theia/core/lib/browser/widget-manager';
 import { TaskContribution, TaskResolverRegistry, TaskProviderRegistry } from './task-contribution';
+import { TaskOpenQuickOpenHandler } from './task-quick-open-handler';
 
 export namespace TaskCommands {
     // Task menu
@@ -45,7 +46,7 @@ export namespace TaskCommands {
 }
 
 @injectable()
-export class TaskFrontendContribution implements CommandContribution, MenuContribution, FrontendApplicationContribution {
+export class TaskFrontendContribution implements CommandContribution, MenuContribution, FrontendApplicationContribution, QuickOpenContribution {
     @inject(QuickOpenTask)
     protected readonly quickOpenTask: QuickOpenTask;
 
@@ -66,6 +67,9 @@ export class TaskFrontendContribution implements CommandContribution, MenuContri
 
     @inject(TaskResolverRegistry)
     protected readonly taskResolverRegistry: TaskResolverRegistry;
+
+    @inject(TaskOpenQuickOpenHandler)
+    protected readonly taskOpenQuickOpenHandler: TaskOpenQuickOpenHandler;
 
     onStart(): void {
         this.contributionProvider.getContributions().forEach(contrib => {
@@ -109,5 +113,9 @@ export class TaskFrontendContribution implements CommandContribution, MenuContri
             label: TaskCommands.TASK_ATTACH.label ? TaskCommands.TASK_ATTACH.label.slice('Tasks: '.length) : TaskCommands.TASK_ATTACH.label,
             order: '1'
         });
+    }
+
+    registerQuickOpenHandlers(handlers: QuickOpenHandlerRegistry): void {
+        handlers.registerHandler(this.taskOpenQuickOpenHandler);
     }
 }

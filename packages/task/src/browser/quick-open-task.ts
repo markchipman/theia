@@ -44,11 +44,11 @@ export class QuickOpenTask implements QuickOpenModel {
             this.items.push(new TaskRunQuickOpenItem(task, this.taskService, true));
         }
 
-        this.quickOpenService.open(this, {
-            placeholder: 'Type the name of a task you want to execute',
-            fuzzyMatchLabel: true,
-            fuzzySort: true
-        });
+        // this.quickOpenService.open(this, {
+        //     placeholder: 'Type the name of a task you want to execute',
+        //     fuzzyMatchLabel: true,
+        //     fuzzySort: true
+        // });
     }
 
     attach(): void {

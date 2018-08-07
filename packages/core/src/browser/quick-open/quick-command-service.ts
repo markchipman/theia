@@ -18,7 +18,7 @@ import { inject, injectable } from "inversify";
 import { Command, CommandRegistry } from '../../common';
 import { Keybinding, KeybindingRegistry } from '../keybinding';
 import { QuickOpenModel, QuickOpenItem, QuickOpenMode } from './quick-open-model';
-import { QuickOpenService } from "./quick-open-service";
+import { QuickOpenService, QuickOpenContribution, QuickOpenHandlerRegistry, QuickOpenHandler } from './quick-open-service';
 
 @injectable()
 export class QuickCommandService implements QuickOpenModel {
@@ -41,11 +41,11 @@ export class QuickCommandService implements QuickOpenModel {
             }
         }
 
-        this.quickOpenService.open(this, {
-            placeholder: 'Type the name of a command you want to execute',
-            fuzzyMatchLabel: true,
-            fuzzySort: false
-        });
+        // this.quickOpenService.open(this, {
+        //     placeholder: 'Type the name of a command you want to execute',
+        //     fuzzyMatchLabel: true,
+        //     fuzzySort: false
+        // });
     }
 
     public onType(lookFor: string, acceptor: (items: QuickOpenItem[]) => void): void {
@@ -101,5 +101,32 @@ export class CommandQuickOpenItem extends QuickOpenItem {
             this.commands.executeCommand(this.command.id);
         }, 50);
         return true;
+    }
+}
+
+@injectable()
+export class CommandQuickOpenHandler implements QuickOpenHandler {
+
+    @inject(QuickCommandService)
+    protected readonly quickCommandService: QuickCommandService;
+
+    readonly prefix: string = '>';
+
+    readonly description: string = 'Quick Command';
+
+    async getModel(): Promise<QuickOpenModel> {
+        await this.quickCommandService.open();
+        return this.quickCommandService;
+    }
+}
+
+@injectable()
+export class CommandQuickOpenContribution implements QuickOpenContribution {
+
+    @inject(CommandQuickOpenHandler)
+    protected readonly commandQuickOpenHandler: CommandQuickOpenHandler;
+
+    registerQuickOpenHandlers(handlers: QuickOpenHandlerRegistry): void {
+        handlers.registerHandler(this.commandQuickOpenHandler);
     }
 }
