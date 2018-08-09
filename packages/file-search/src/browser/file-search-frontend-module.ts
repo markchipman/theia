@@ -20,7 +20,7 @@ import { WebSocketConnectionProvider, KeybindingContribution, QuickOpenContribut
 import { QuickFileOpenFrontendContribution } from './quick-file-open-contribution';
 import { QuickFileOpenService } from './quick-file-open';
 import { fileSearchServicePath, FileSearchService } from '../common/file-search-service';
-import { FileQuickOpenHandler } from './file-quick-open-handler';
+import { FileQuickOpenHandler } from './quick-file-open';
 
 export default new ContainerModule((bind: interfaces.Bind) => {
     bind(FileSearchService).toDynamicValue(ctx => {

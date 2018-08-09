@@ -17,7 +17,7 @@
 import { inject, injectable } from "inversify";
 import {
     QuickOpenModel, QuickOpenItem, QuickOpenMode, QuickOpenService,
-    OpenerService, KeybindingRegistry, Keybinding
+    OpenerService, KeybindingRegistry, Keybinding, QuickOpenHandler
 } from '@theia/core/lib/browser';
 import { FileSystem, FileStat } from '@theia/filesystem/lib/common/filesystem';
 import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
@@ -74,7 +74,7 @@ export class QuickFileOpenService implements QuickOpenModel {
         // let placeholderText = "File name to search.";
         // const keybinding = this.getKeyCommand();
         // if (keybinding) {
-            // placeholderText += ` (Press ${keybinding} to show/hide ignored files)`;
+        // placeholderText += ` (Press ${keybinding} to show/hide ignored files)`;
         // }
 
         // Triggering the keyboard shortcut while the dialog is open toggles
@@ -200,5 +200,21 @@ export class FileQuickOpenItem extends QuickOpenItem {
         }
         this.openerService.getOpener(this.uri).then(opener => opener.open(this.uri));
         return true;
+    }
+}
+
+@injectable()
+export class FileQuickOpenHandler implements QuickOpenHandler {
+
+    @inject(QuickFileOpenService)
+    protected readonly fileQuickOpenModel: QuickFileOpenService;
+
+    readonly prefix: string = '...';
+
+    readonly description: string = 'Open File';
+
+    async getModel(): Promise<QuickOpenModel> {
+        this.fileQuickOpenModel.open();
+        return this.fileQuickOpenModel;
     }
 }

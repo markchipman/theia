@@ -18,7 +18,7 @@ import { ContainerModule } from 'inversify';
 import { FrontendApplicationContribution, QuickOpenContribution } from '@theia/core/lib/browser';
 import { CommandContribution, MenuContribution, bindContributionProvider } from '@theia/core/lib/common';
 import { WebSocketConnectionProvider } from '@theia/core/lib/browser/messaging';
-import { QuickOpenTask } from './quick-open-task';
+import { QuickOpenTask, TaskQuickOpenHandler } from './quick-open-task';
 import { TaskContribution, TaskProviderRegistry, TaskResolverRegistry } from './task-contribution';
 import { TaskService } from './task-service';
 import { TaskConfigurations } from './task-configurations';
@@ -27,7 +27,6 @@ import { createCommonBindings } from '../common/task-common-module';
 import { TaskServer, taskPath } from '../common/task-protocol';
 import { TaskWatcher } from '../common/task-watcher';
 import { bindProcessTaskModule } from './process/process-task-frontend-module';
-import { TaskOpenQuickOpenHandler } from './task-quick-open-handler';
 
 export default new ContainerModule(bind => {
     bind(TaskFrontendContribution).toSelf().inSingletonScope();
@@ -54,5 +53,5 @@ export default new ContainerModule(bind => {
 
     bindProcessTaskModule(bind);
 
-    bind(TaskOpenQuickOpenHandler).toSelf().inSingletonScope();
+    bind(TaskQuickOpenHandler).toSelf().inSingletonScope();
 });

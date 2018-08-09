@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { inject, injectable } from "inversify";
+import { inject, injectable } from 'inversify';
 import { Command, CommandRegistry } from '../../common';
 import { Keybinding, KeybindingRegistry } from '../keybinding';
 import { QuickOpenModel, QuickOpenItem, QuickOpenMode } from './quick-open-model';
@@ -25,13 +25,16 @@ export class QuickCommandService implements QuickOpenModel {
 
     private items: QuickOpenItem[];
 
-    constructor(
-        @inject(CommandRegistry) protected readonly commands: CommandRegistry,
-        @inject(KeybindingRegistry) protected readonly keybindings: KeybindingRegistry,
-        @inject(QuickOpenService) protected readonly quickOpenService: QuickOpenService
-    ) { }
+    @inject(CommandRegistry)
+    protected readonly commands: CommandRegistry;
 
-    open(): void {
+    @inject(KeybindingRegistry)
+    protected readonly keybindings: KeybindingRegistry;
+
+    @inject(QuickOpenService)
+    protected readonly quickOpenService: QuickOpenService;
+
+    readCommands(): void {
         // let's compute the items here to do it in the context of the currently activeElement
         this.items = [];
         const filteredAndSortedCommands = this.commands.commands.filter(a => a.label).sort((a, b) => a.label!.localeCompare(b.label!));
@@ -40,18 +43,20 @@ export class QuickCommandService implements QuickOpenModel {
                 this.items.push(new CommandQuickOpenItem(command, this.commands, this.keybindings));
             }
         }
-
-        // this.quickOpenService.open(this, {
-        //     placeholder: 'Type the name of a command you want to execute',
-        //     fuzzyMatchLabel: true,
-        //     fuzzySort: false
-        // });
     }
+
+    // open(): void {
+    //     this.readCommands();
+    //     this.quickOpenService.open(this, {
+    //         placeholder: 'Type the name of a command you want to execute',
+    //         fuzzyMatchLabel: true,
+    //         fuzzySort: false
+    //     });
+    // }
 
     public onType(lookFor: string, acceptor: (items: QuickOpenItem[]) => void): void {
         acceptor(this.items);
     }
-
 }
 
 export class CommandQuickOpenItem extends QuickOpenItem {
@@ -108,15 +113,15 @@ export class CommandQuickOpenItem extends QuickOpenItem {
 export class CommandQuickOpenHandler implements QuickOpenHandler {
 
     @inject(QuickCommandService)
-    protected readonly quickCommandService: QuickCommandService;
+    protected readonly commandQuickOpenModel: QuickCommandService;
 
     readonly prefix: string = '>';
 
     readonly description: string = 'Quick Command';
 
     async getModel(): Promise<QuickOpenModel> {
-        await this.quickCommandService.open();
-        return this.quickCommandService;
+        this.commandQuickOpenModel.readCommands();
+        return this.commandQuickOpenModel;
     }
 }
 

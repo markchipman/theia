@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { inject, injectable } from 'inversify';
-import { QuickOpenService, QuickOpenModel, QuickOpenItem, QuickOpenMode } from '@theia/core/lib/browser/quick-open/';
+import { QuickOpenService, QuickOpenModel, QuickOpenItem, QuickOpenMode, QuickOpenHandler } from '@theia/core/lib/browser/quick-open/';
 import { TaskService } from './task-service';
 import { TaskConfigurations } from "./task-configurations";
 import { TaskInfo, TaskConfiguration } from '../common/task-protocol';
@@ -25,13 +25,16 @@ export class QuickOpenTask implements QuickOpenModel {
 
     protected items: QuickOpenItem[];
 
-    constructor(
-        @inject(TaskService) protected readonly taskService: TaskService,
-        @inject(TaskConfigurations) protected readonly taskConfigurations: TaskConfigurations,
-        @inject(QuickOpenService) protected readonly quickOpenService: QuickOpenService
-    ) { }
+    @inject(TaskService)
+    protected readonly taskService: TaskService;
 
-    async open(): Promise<void> {
+    @inject(TaskConfigurations)
+    protected readonly taskConfigurations: TaskConfigurations;
+
+    @inject(QuickOpenService)
+    protected readonly quickOpenService: QuickOpenService;
+
+    async readTasks(): Promise<void> {
         this.items = [];
 
         const configuredTasks = await this.taskConfigurations.getTasks();
@@ -43,12 +46,15 @@ export class QuickOpenTask implements QuickOpenModel {
         for (const task of providedTasks) {
             this.items.push(new TaskRunQuickOpenItem(task, this.taskService, true));
         }
+    }
 
-        // this.quickOpenService.open(this, {
-        //     placeholder: 'Type the name of a task you want to execute',
-        //     fuzzyMatchLabel: true,
-        //     fuzzySort: true
-        // });
+    async open(): Promise<void> {
+        await this.readTasks();
+        this.quickOpenService.open(this, {
+            placeholder: 'Type the name of a task you want to execute',
+            fuzzyMatchLabel: true,
+            fuzzySort: true
+        });
     }
 
     attach(): void {
@@ -75,10 +81,6 @@ export class QuickOpenTask implements QuickOpenModel {
         });
     }
 
-    public getItems(lookFor: string): QuickOpenItem[] {
-        return this.items;
-    }
-
     onType(lookFor: string, acceptor: (items: QuickOpenItem[]) => void): void {
         acceptor(this.items);
     }
@@ -86,7 +88,6 @@ export class QuickOpenTask implements QuickOpenModel {
     protected getRunningTaskLabel(task: TaskInfo): string {
         return `Task id: ${task.taskId}, label: ${task.config.label}`;
     }
-
 }
 
 export class TaskRunQuickOpenItem extends QuickOpenItem {
@@ -139,5 +140,21 @@ export class TaskAttachQuickOpenItem extends QuickOpenItem {
             this.taskService.attach(this.task.terminalId, this.task.taskId);
         }
         return true;
+    }
+}
+
+@injectable()
+export class TaskQuickOpenHandler implements QuickOpenHandler {
+
+    @inject(QuickOpenTask)
+    protected readonly taskQuickOpenModel: QuickOpenTask;
+
+    readonly prefix: string = 'task ';
+
+    readonly description: string = 'Run Task';
+
+    async getModel(): Promise<QuickOpenModel> {
+        await this.taskQuickOpenModel.readTasks();
+        return this.taskQuickOpenModel;
     }
 }

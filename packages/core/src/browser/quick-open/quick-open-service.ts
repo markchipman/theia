@@ -30,6 +30,8 @@ export namespace QuickOpenOptions {
         readonly fuzzyMatchDescription: boolean;
         readonly fuzzySort: boolean;
 
+        readonly skipPrefix: boolean;
+
         /**
          * Whether to display the items that don't have any highlight.
          */
@@ -47,6 +49,8 @@ export namespace QuickOpenOptions {
         fuzzyMatchDetail: false,
         fuzzyMatchDescription: false,
         fuzzySort: false,
+
+        skipPrefix: false,
 
         showItemsWithoutHighlight: false,
 
@@ -135,6 +139,7 @@ export class QuickOpenService {
             onType: (lookFor: string, acceptor: (items: QuickOpenItem[]) => void) => {
                 const handler = this.handlers.getHandlerByText(lookFor);
                 if (handler) {
+                    // TODO: problem with prefix - it doesn't change
                     const searchValue = lookFor.substr(handler.prefix.length);
                     handler.getModel().then(mod => mod.onType(searchValue, handlerItems => acceptor(handlerItems)));
                     return;
@@ -149,7 +154,7 @@ export class QuickOpenService {
                             if (mode !== QuickOpenMode.OPEN) {
                                 return false;
                             }
-                            item.getModel().then(mod => mod.onType('', handlerItems => acceptor(handlerItems)));
+                            this.show(item.prefix);
                             return false;
                         }
                     }));
@@ -173,8 +178,11 @@ export class QuickOpenService {
      */
     show(prefix?: string): void {
         this.open(this.model, {
-            // prefix: prefix,
-            placeholder: 'Type ? to get help'
+            prefix: prefix,
+            placeholder: 'Type ? to get help on the actions you can take from here',
+            fuzzyMatchLabel: true,
+            fuzzySort: true,
+            skipPrefix: true
         });
     }
 }
