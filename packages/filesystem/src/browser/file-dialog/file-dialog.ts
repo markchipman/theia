@@ -25,18 +25,40 @@ import { FileDialogModel } from './file-dialog-model';
 import { FileDialogWidget } from './file-dialog-widget';
 import { FileDialogTreeFiltersRenderer, FileDialogTreeFilters } from './file-dialog-tree-filters-renderer';
 
-export const FileDialogFactory = Symbol('FileDialogFactory');
-export interface FileDialogFactory {
-    (props: FileDialogProps): FileDialog;
+export const OpenFileDialogFactory = Symbol('OpenFileDialogFactory');
+export interface OpenFileDialogFactory {
+    (props: OpenFileDialogProps): OpenFileDialog;
+}
+
+export const SaveFileDialogFactory = Symbol('SaveFileDialogFactory');
+export interface SaveFileDialogFactory {
+    (props: SaveFileDialogProps): SaveFileDialog;
 }
 
 export const NAVIGATION_PANEL_CLASS = 'theia-NavigationPanel';
 export const CONTROL_PANEL_CLASS = 'theia-ControlPanel';
 
-@injectable()
 export class FileDialogProps extends DialogProps {
+
     /**
-     * A human-readable string for the open button.
+     * A set of file filters that are used by the dialog. Each entry is a human readable label,
+     * like "TypeScript", and an array of extensions, e.g.
+     * ```ts
+     * {
+     * 	'Images': ['png', 'jpg']
+     * 	'TypeScript': ['ts', 'tsx']
+     * }
+     * ```
+     */
+    filters?: FileDialogTreeFilters;
+
+}
+
+@injectable()
+export class OpenFileDialogProps extends FileDialogProps {
+
+    /**
+     * A human-readable string for the accept button.
      */
     openLabel?: string;
 
@@ -55,21 +77,19 @@ export class FileDialogProps extends DialogProps {
      */
     canSelectMany?: boolean;
 
-    /**
-     * A set of file filters that are used by the dialog. Each entry is a human readable label,
-     * like "TypeScript", and an array of extensions, e.g.
-     * ```ts
-     * {
-     * 	'Images': ['png', 'jpg']
-     * 	'TypeScript': ['ts', 'tsx']
-     * }
-     * ```
-     */
-    filters?: FileDialogTreeFilters;
 }
 
 @injectable()
-export class FileDialog extends AbstractDialog<MaybeArray<FileStatNode>> {
+export class SaveFileDialogProps extends FileDialogProps {
+
+    /**
+     * A human-readable string for the accept button.
+     */
+    saveLabel?: string;
+
+}
+
+export abstract class FileDialog<T> extends AbstractDialog<T> {
 
     protected readonly back: HTMLSpanElement;
     protected readonly forward: HTMLSpanElement;
@@ -155,15 +175,33 @@ export class FileDialog extends AbstractDialog<MaybeArray<FileStatNode>> {
         this.appendFiltersPanel();
 
         this.appendCloseButton('Cancel');
-        this.appendAcceptButton(this.props.openLabel ? this.props.openLabel : 'Open');
+        this.appendAcceptButton(this.getAcceptButtonLabel());
 
         this.addKeyListener(this.back, Key.ENTER, () => this.model.navigateBackward(), 'click');
         this.addKeyListener(this.forward, Key.ENTER, () => this.model.navigateForward(), 'click');
         super.onAfterAttach(msg);
     }
 
+    protected abstract getAcceptButtonLabel(): string;
+
     protected onActivateRequest(msg: Message): void {
         this.widget.activate();
+    }
+
+}
+
+@injectable()
+export class OpenFileDialog extends FileDialog<MaybeArray<FileStatNode>> {
+
+    constructor(
+        @inject(OpenFileDialogProps) readonly props: OpenFileDialogProps,
+        @inject(FileDialogWidget) readonly widget: FileDialogWidget
+    ) {
+        super(props, widget);
+    }
+
+    protected getAcceptButtonLabel(): string {
+        return this.props.openLabel ? this.props.openLabel : 'Open';
     }
 
     isValid(value: MaybeArray<FileStatNode>): string {
@@ -215,6 +253,35 @@ export class FileDialog extends AbstractDialog<MaybeArray<FileStatNode>> {
         } else {
             return this.widget.model.selectedFileStatNodes;
         }
+    }
+
+}
+
+@injectable()
+export class SaveFileDialog extends FileDialog<string> {
+
+    constructor(
+        @inject(SaveFileDialogProps) readonly props: SaveFileDialogProps,
+        @inject(FileDialogWidget) readonly widget: FileDialogWidget
+    ) {
+        super(props, widget);
+    }
+
+    protected getAcceptButtonLabel(): string {
+        return this.props.saveLabel ? this.props.saveLabel : 'Save';
+    }
+
+    isValid(value: string): string {
+        return '';
+    }
+
+    get value(): string {
+        // if (this.widget.model.selectedFileStatNodes.length === 1) {
+        //     return this.widget.model.selectedFileStatNodes[0];
+        // } else {
+        //     return this.widget.model.selectedFileStatNodes;
+        // }
+        return '/temp/file.txt';
     }
 
 }

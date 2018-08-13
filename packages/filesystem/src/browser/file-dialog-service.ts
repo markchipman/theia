@@ -17,17 +17,17 @@
 import { injectable, inject } from 'inversify';
 import { FileSystem, FileStat } from '../common';
 import { FileStatNode, DirNode } from './file-tree';
-import { FileDialogFactory, FileDialogProps } from './file-dialog';
+import { OpenFileDialogFactory, OpenFileDialogProps } from './file-dialog';
 import URI from '@theia/core/lib/common/uri';
 import { LabelProvider } from '@theia/core/lib/browser';
 
 @injectable()
 export class FileDialogService {
     @inject(FileSystem) protected readonly fileSystem: FileSystem;
-    @inject(FileDialogFactory) protected readonly fileDialogFactory: FileDialogFactory;
+    @inject(OpenFileDialogFactory) protected readonly openFileDialogFactory: OpenFileDialogFactory;
     @inject(LabelProvider) protected readonly labelProvider: LabelProvider;
 
-    async show(props: FileDialogProps, folder?: FileStat): Promise<FileStatNode | undefined> {
+    async show(props: OpenFileDialogProps, folder?: FileStat): Promise<FileStatNode | undefined> {
         const title = props && props.title ? props.title : 'Open';
         const folderToOpen = folder || await this.fileSystem.getCurrentUserHome();
         if (folderToOpen) {
@@ -39,7 +39,7 @@ export class FileDialogService {
             ]);
             if (rootStat) {
                 const rootNode = DirNode.createRoot(rootStat, name, label);
-                const dialog = this.fileDialogFactory({ title });
+                const dialog = this.openFileDialogFactory({ title });
                 dialog.model.navigateTo(rootNode);
                 const nodes = await dialog.open();
                 return Array.isArray(nodes) ? nodes[0] : nodes;

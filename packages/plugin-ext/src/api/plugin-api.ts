@@ -182,6 +182,33 @@ export interface OpenDialogOptionsMain {
 }
 
 /**
+ * Options to configure the behaviour of a file save dialog.
+ */
+export interface SaveDialogOptionsMain {
+    /**
+     * The resource the dialog shows when opened.
+     */
+    defaultUri?: string;
+
+    /**
+     * A human-readable string for the save button.
+     */
+    saveLabel?: string;
+
+    /**
+     * A set of file filters that are used by the dialog. Each entry is a human readable label,
+     * like "TypeScript", and an array of extensions, e.g.
+     * ```ts
+     * {
+     * 	'Images': ['png', 'jpg']
+     * 	'TypeScript': ['ts', 'tsx']
+     * }
+     * ```
+     */
+    filters?: { [name: string]: string[] };
+}
+
+/**
  * Options to configure the behaviour of the [workspace folder](#WorkspaceFolder) pick UI.
  */
 export interface WorkspaceFolderPickOptionsMain {
@@ -201,7 +228,6 @@ export interface QuickOpenMain {
     $setItems(items: PickOpenItem[]): Promise<any>;
     $setError(error: Error): Promise<any>;
     $input(options: theia.InputBoxOptions, validateInput: boolean): Promise<string | undefined>;
-    $showOpenDialog(options: OpenDialogOptionsMain): Promise<string[] | undefined>;
 }
 
 export interface WorkspaceMain {
@@ -210,6 +236,11 @@ export interface WorkspaceMain {
 
 export interface WorkspaceExt {
     $onWorkspaceFoldersChanged(event: theia.WorkspaceFoldersChangeEvent): void;
+}
+
+export interface DialogsMain {
+    $showOpenDialog(options: OpenDialogOptionsMain): Promise<string[] | undefined>;
+    $showSaveDialog(options: SaveDialogOptionsMain): Promise<string | undefined>;
 }
 
 export interface WindowStateExt {
@@ -572,6 +603,7 @@ export interface LanguagesMain {
 export const PLUGIN_RPC_CONTEXT = {
     COMMAND_REGISTRY_MAIN: <ProxyIdentifier<CommandRegistryMain>>createProxyIdentifier<CommandRegistryMain>('CommandRegistryMain'),
     QUICK_OPEN_MAIN: createProxyIdentifier<QuickOpenMain>('QuickOpenMain'),
+    DIALOGS_MAIN: createProxyIdentifier<DialogsMain>('DialogsMain'),
     WORKSPACE_MAIN: createProxyIdentifier<WorkspaceMain>('WorkspaceMain'),
     MESSAGE_REGISTRY_MAIN: <ProxyIdentifier<MessageRegistryMain>>createProxyIdentifier<MessageRegistryMain>('MessageRegistryMain'),
     TEXT_EDITORS_MAIN: createProxyIdentifier<TextEditorsMain>('TextEditorsMain'),
