@@ -17,7 +17,7 @@
 import { inject, injectable } from "inversify";
 import {
     QuickOpenModel, QuickOpenItem, QuickOpenMode, QuickOpenService,
-    OpenerService, KeybindingRegistry, Keybinding, QuickOpenHandler
+    OpenerService, KeybindingRegistry, QuickOpenHandler
 } from '@theia/core/lib/browser';
 import { FileSystem, FileStat } from '@theia/filesystem/lib/common/filesystem';
 import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
@@ -71,12 +71,6 @@ export class QuickFileOpenService implements QuickOpenModel {
     }
 
     open(): void {
-        // let placeholderText = "File name to search.";
-        // const keybinding = this.getKeyCommand();
-        // if (keybinding) {
-        // placeholderText += ` (Press ${keybinding} to show/hide ignored files)`;
-        // }
-
         // Triggering the keyboard shortcut while the dialog is open toggles
         // showing the ignored files.
         if (this.isOpen) {
@@ -87,31 +81,12 @@ export class QuickFileOpenService implements QuickOpenModel {
             this.isOpen = true;
         }
 
-        // this.quickOpenService.open(this, {
-        //     placeholder: placeholderText,
-        //     prefix: this.currentLookFor,
-        //     fuzzyMatchLabel: true,
-        //     fuzzyMatchDescription: true,
-        //     fuzzySort: true,
-        //     onClose: () => {
-        //         this.isOpen = false;
-        //     },
-        // });
-    }
-
-    /**
-     * Get a string (suitable to show to the user) representing the keyboard
-     * shortcut used to open the quick file open menu.
-     */
-    protected getKeyCommand(): string | undefined {
-        const keyCommand = this.keybindingRegistry.getKeybindingsForCommand(quickFileOpen.id);
-        if (keyCommand) {
-            // We only consider the first keybinding.
-            const accel = Keybinding.acceleratorFor(keyCommand[0], '+');
-            return accel.join(' ');
-        }
-
-        return undefined;
+        this.quickOpenService.show1({
+            prefix: this.currentLookFor,
+            onClose: () => {
+                this.isOpen = false;
+            }
+        });
     }
 
     private cancelIndicator = new CancellationTokenSource();
@@ -214,7 +189,6 @@ export class FileQuickOpenHandler implements QuickOpenHandler {
     readonly description: string = 'Open File';
 
     async getModel(): Promise<QuickOpenModel> {
-        this.fileQuickOpenModel.open();
         return this.fileQuickOpenModel;
     }
 }

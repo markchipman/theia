@@ -37,7 +37,6 @@ import {
     QuickOpenService, QuickCommandService, QuickCommandFrontendContribution, QuickOpenContribution, QuickOpenHandlerRegistry,
     CommandQuickOpenHandler, CommandQuickOpenContribution, HelpQuickOpenHandler, HelpQuickOpenContribution
 } from './quick-open';
-import { QuickOpenHandlerFrontendContribution } from './quick-open/quick-open-handler-frontend-contribution';
 import { LocalStorageService, StorageService } from './storage-service';
 import { WidgetFactory, WidgetManager } from './widget-manager';
 import {
@@ -126,14 +125,12 @@ export const frontendApplicationModule = new ContainerModule((bind, unbind, isBo
     bind(QuickOpenService).toSelf().inSingletonScope();
     bind(QuickCommandService).toSelf().inSingletonScope();
     bind(QuickCommandFrontendContribution).toSelf().inSingletonScope();
-    [CommandContribution, KeybindingContribution].forEach(serviceIdentifier =>
+    [CommandContribution, KeybindingContribution, FrontendApplicationContribution].forEach(serviceIdentifier =>
         bind(serviceIdentifier).toDynamicValue(ctx => ctx.container.get(QuickCommandFrontendContribution)).inSingletonScope()
     );
 
     bindContributionProvider(bind, QuickOpenContribution);
     bind(QuickOpenHandlerRegistry).toSelf().inSingletonScope();
-    bind(QuickOpenHandlerFrontendContribution).toSelf().inSingletonScope();
-    bind(FrontendApplicationContribution).toService(QuickOpenHandlerFrontendContribution);
 
     bind(HelpQuickOpenHandler).toSelf().inSingletonScope();
     bind(QuickOpenContribution).to(HelpQuickOpenContribution);

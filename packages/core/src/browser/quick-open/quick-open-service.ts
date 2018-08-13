@@ -73,10 +73,6 @@ export class QuickOpenHandlerRegistry implements Disposable {
     @inject(ILogger)
     protected readonly logger: ILogger;
 
-    dispose(): void {
-        this.toDispose.dispose();
-    }
-
     /**
      * Register the given handler.
      * Do nothing if a handler is already registered for the given id.
@@ -94,8 +90,13 @@ export class QuickOpenHandlerRegistry implements Disposable {
         return disposable;
     }
 
-    registerDefaultHandler(handler: QuickOpenHandler): void {
+    registerDefaultHandler(handler: QuickOpenHandler): Disposable {
         this.defaultHandler = handler;
+        const disposable = {
+            dispose: () => this.handlers.delete(handler.prefix)
+        };
+        this.toDispose.push(disposable);
+        return disposable;
     }
 
     getDefaultHandler(): QuickOpenHandler {
@@ -110,13 +111,9 @@ export class QuickOpenHandlerRegistry implements Disposable {
     }
 
     /**
-     * Get a handler for the given id or `undefined` if none.
+     * Get a handler that matches the given text or `undefined` if none.
      */
-    getHandler(id: string): QuickOpenHandler | undefined {
-        return this.handlers.get(id);
-    }
-
-    getHandlerByText(text: string): QuickOpenHandler | undefined {
+    getHandlerForText(text: string): QuickOpenHandler | undefined {
         for (const handler of this.handlers.values()) {
             if (text.startsWith(handler.prefix)) {
                 return handler;
@@ -124,12 +121,17 @@ export class QuickOpenHandlerRegistry implements Disposable {
         }
         return undefined;
     }
+
+    dispose(): void {
+        this.toDispose.dispose();
+    }
 }
 
 @injectable()
 export class QuickOpenService {
 
     protected readonly model: QuickOpenModel;
+    protected currentPrefix: string;
 
     @inject(QuickOpenHandlerRegistry)
     protected readonly handlers: QuickOpenHandlerRegistry;
@@ -137,29 +139,24 @@ export class QuickOpenService {
     constructor() {
         this.model = {
             onType: (lookFor: string, acceptor: (items: QuickOpenItem[]) => void) => {
-                const handler = this.handlers.getHandlerByText(lookFor);
-                if (handler) {
-                    // TODO: problem with prefix - it doesn't change
-                    const searchValue = lookFor.substr(handler.prefix.length);
-                    handler.getModel().then(mod => mod.onType(searchValue, handlerItems => acceptor(handlerItems)));
+                const handler = this.handlers.getHandlerForText(lookFor);
+
+                const handlerPrefix = handler ? handler.prefix : '';
+                if (handlerPrefix !== this.currentPrefix) {
+                    this.currentPrefix = handlerPrefix;
+                    // A prefix has been changed.
+                    // The quick open widget needs to be reopened with the new prefix.
+                    this.show(lookFor);
                     return;
                 }
-                // no default handler is registered - show all of them
-                const items: QuickOpenItem[] = [];
-                this.handlers.getHandlers().forEach(item => {
-                    items.push(new QuickOpenItem({
-                        label: item.prefix,
-                        description: item.description,
-                        run: (mode: QuickOpenMode) => {
-                            if (mode !== QuickOpenMode.OPEN) {
-                                return false;
-                            }
-                            this.show(item.prefix);
-                            return false;
-                        }
-                    }));
-                });
-                acceptor(items);
+
+                if (handler) {
+                    const searchValue = lookFor.substr(handler.prefix.length);
+                    handler.getModel().then(mod => mod.onType(searchValue, handlerItems => acceptor(handlerItems)));
+                } else {
+                    const defHandler = this.handlers.getDefaultHandler();
+                    defHandler.getModel().then(mod => mod.onType(lookFor, handlerItems => acceptor(handlerItems)));
+                }
             }
         };
     }
@@ -170,6 +167,19 @@ export class QuickOpenService {
      */
     open(model: QuickOpenModel, options?: QuickOpenOptions): void {
         // no-op
+    }
+
+    /**
+     * Opens a quick open widget with a model that handles prefixes.
+     */
+    show1(customOpts: QuickOpenOptions): void {
+        // merge the default options with the provided
+        const options = QuickOpenOptions.resolve(customOpts);
+        // override some options
+        this.open(this.model, QuickOpenOptions.resolve({
+            placeholder: 'Type ? to get help on the actions you can take from here',
+            skipPrefix: true
+        }, options));
     }
 
     /**

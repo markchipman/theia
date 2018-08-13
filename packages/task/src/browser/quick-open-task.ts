@@ -34,7 +34,8 @@ export class QuickOpenTask implements QuickOpenModel {
     @inject(QuickOpenService)
     protected readonly quickOpenService: QuickOpenService;
 
-    async readTasks(): Promise<void> {
+    /** Initialize this quick open model with the tasks. */
+    async init(): Promise<void> {
         this.items = [];
 
         const configuredTasks = await this.taskConfigurations.getTasks();
@@ -49,7 +50,7 @@ export class QuickOpenTask implements QuickOpenModel {
     }
 
     async open(): Promise<void> {
-        await this.readTasks();
+        await this.init();
         this.quickOpenService.open(this, {
             placeholder: 'Type the name of a task you want to execute',
             fuzzyMatchLabel: true,
@@ -154,7 +155,7 @@ export class TaskQuickOpenHandler implements QuickOpenHandler {
     readonly description: string = 'Run Task';
 
     async getModel(): Promise<QuickOpenModel> {
-        await this.taskQuickOpenModel.readTasks();
+        await this.taskQuickOpenModel.init();
         return this.taskQuickOpenModel;
     }
 }

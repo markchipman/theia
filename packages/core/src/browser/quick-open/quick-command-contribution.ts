@@ -14,11 +14,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { injectable, inject } from 'inversify';
-import { QuickCommandService } from './quick-command-service';
-import { Command, CommandRegistry, CommandContribution } from '../../common';
+import { injectable, inject, named } from 'inversify';
+import { Command, CommandRegistry, CommandContribution, ContributionProvider } from '../../common';
 import { KeybindingRegistry, KeybindingContribution } from "../keybinding";
-import { QuickOpenService } from './quick-open-service';
+import { QuickOpenService, QuickOpenHandlerRegistry, QuickOpenContribution } from './quick-open-service';
+import { FrontendApplicationContribution } from '../frontend-application';
 
 export const quickCommand: Command = {
     id: 'quickCommand',
@@ -26,13 +26,15 @@ export const quickCommand: Command = {
 };
 
 @injectable()
-export class QuickCommandFrontendContribution implements CommandContribution, KeybindingContribution {
-
-    @inject(QuickCommandService)
-    protected readonly quickCommandService: QuickCommandService;
+export class QuickCommandFrontendContribution implements CommandContribution, KeybindingContribution, FrontendApplicationContribution {
 
     @inject(QuickOpenService)
     protected readonly quickOpenService: QuickOpenService;
+
+    @inject(ContributionProvider) @named(QuickOpenContribution)
+    protected readonly contributionProvider: ContributionProvider<QuickOpenContribution>;
+
+    @inject(QuickOpenHandlerRegistry) protected readonly quickOpenHandlerRegistry: QuickOpenHandlerRegistry;
 
     registerCommands(commands: CommandRegistry): void {
         commands.registerCommand(quickCommand, {
@@ -49,5 +51,11 @@ export class QuickCommandFrontendContribution implements CommandContribution, Ke
             command: quickCommand.id,
             keybinding: "ctrlcmd+shift+p"
         });
+    }
+
+    onStart(): void {
+        this.contributionProvider.getContributions().forEach(contrib =>
+            contrib.registerQuickOpenHandlers(this.quickOpenHandlerRegistry)
+        );
     }
 }
