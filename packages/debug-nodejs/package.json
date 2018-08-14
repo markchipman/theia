@@ -1,0 +1,54 @@
+{
+  "name": "@theia/debug-nodejs",
+  "version": "0.3.13",
+  "description": "Theia - NodeJS Debug Extension",
+  "dependencies": {
+    "@theia/debug": "^0.3.13",
+    "vscode-debugprotocol": "^1.26.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "theiaExtensions": [
+    {
+      "backend": "lib/node/debug-nodejs-backend-module"
+    }
+  ],
+  "keywords": [
+    "theia-extension, debug, nodejs"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/theia-ide/theia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/theia-ide/theia/issues"
+  },
+  "homepage": "https://github.com/theia-ide/theia",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "prepare": "yarn run clean && yarn run build",
+    "clean": "theiaext clean",
+    "build": "concurrently -n download,build -c red,blue \"gulp download_nodejs_debug_adapter\" \"theiaext build\"",
+    "watch": "theiaext watch",
+    "test": "theiaext test",
+    "docs": "theiaext docs"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "^0.3.13",
+    "gulp": "^3.9.1",
+    "gulp-decompress": "^2.0.1",
+    "gulp-download": "0.0.1"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  },
+  "debugAdapter": {
+    "downloadUri": "https://github.com/tolusha/node-debug/releases/download/v1.23.5/vscode-node-debug.tar.gz",
+    "dir": "lib/adapter"
+  }
+}
