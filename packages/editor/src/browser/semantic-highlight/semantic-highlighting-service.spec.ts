@@ -27,4 +27,16 @@ describe('semantic-highlighting-service', () => {
         expect(actual).to.be.deep.equal(expected);
     });
 
+    it('should fill with zeros when right shift for the decode phase', function () {
+        this.timeout(10_000);
+        const input: number[] = [];
+        for (let i = 0; i < 65_536; i++) {
+            input.push(...[i, i, i]);
+        }
+        const expected = SemanticHighlightingService.Token.fromArray(input);
+        const encoded = SemanticHighlightingService.encode(expected);
+        const actual = SemanticHighlightingService.decode(encoded);
+        expect(actual).to.be.deep.equal(expected);
+    });
+
 });
